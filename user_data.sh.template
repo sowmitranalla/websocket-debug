@@ -7,8 +7,9 @@ nvm install --lts
 node -e "console.log('Running Node.js ' + process.version)"
 
 # git clone repo and cd into server folder
+git clone https://github.com/sowmitranalla/websocket-debug.git
+cd websocket-debug/server/
 
-
+# install and start up the server
 npm install
-
 npm start

@@ -1,4 +1,5 @@
 .DS_Store
 .terraform
 
-terraform.tfvars
+# dont want people knowing IDs in AWS
+terraform.tfvars 
