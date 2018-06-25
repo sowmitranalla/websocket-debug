@@ -1,5 +1,8 @@
 .DS_Store
 .terraform
+node_modules/
+terraform.tfstate
+terraform.tfstate.backup
 
 # dont want people knowing IDs in AWS
 terraform.tfvars 

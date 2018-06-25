@@ -1,6 +1,6 @@
 
 
-The terraform scripts in this repo will create an ALB, ASG, launch config, instances, etc. The backend code will let ALB know things are going fine and accept web requests
+The terraform scripts in this repo will create an ALB, ASG, launch config, instances, etc. The backend code will let ALB know things are going fine and accept web socket requests
 
 ### To run the terraform script: 
 
