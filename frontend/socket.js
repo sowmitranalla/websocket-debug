@@ -17,7 +17,7 @@ $(function () {
 
   // var connection = new WebSocket('ws://nalla-debug-alb-2121094606.us-east-2.elb.amazonaws.com/echo');
   // var connection = new WebSocket('ws://localhost:3000/echo');
-  var connection = new WebSocket('ws://18.191.121.154/echo');
+  var connection = new WebSocket('ws://18.219.182.198/echo');
   connection.onopen = () => {
     // connection is opened and ready to use
     console.log('websocket connections sucessfully opened');

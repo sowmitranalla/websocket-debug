@@ -14,7 +14,7 @@ app.get("/healthcheck", (req, res) => {
 
 app.ws('/echo', function(ws, req) {
   ws.on('message', function(msg) {
-    console.log(`accepted websocket message: ${msg}`);
+    console.log(`websocket message @ ${Date.now()} : ${msg}`);
     num = parseInt(msg);
     num++
     ws.send(num);
