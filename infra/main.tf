@@ -9,8 +9,43 @@ resource "aws_alb" "nalla-debug-alb" {
   load_balancer_type = "application"
   subnets = ["${var.subnet1}", "${var.subnet2}", "${var.subnet3}"]
   security_groups = ["${aws_security_group.alb_sg.id}"]
+  access_logs {
+    bucket  = "${aws_s3_bucket.alb_logs.bucket}"
+    prefix  = "test-lb"
+    enabled = true
+  }
 }
 
+data "aws_elb_service_account" "main" {}
+
+data "aws_iam_policy_document" "bucket_policy" {
+  statement {
+    actions = [
+      "s3:PutObject"
+    ]
+
+    effect = "Allow"
+
+    resources = [
+      "arn:aws:s3:::nallas-alb-logs-bucket-062618/*"
+    ]
+
+    principals {
+      identifiers = [
+        "${data.aws_elb_service_account.main.arn}"
+      ]
+      type = "AWS"
+    }
+  }
+}
+resource "aws_s3_bucket" "alb_logs" {
+  bucket = "nallas-alb-logs-bucket-062618"
+  acl    = "log-delivery-write"
+  policy = "${data.aws_iam_policy_document.bucket_policy.json}"
+  tags {
+    Name        = "Nallas bucket to test websocket"
+  }
+}
 // create security group similar to the ones we have 
 resource "aws_security_group" "alb_sg" {
   name = "$nallas-alb-sg"
