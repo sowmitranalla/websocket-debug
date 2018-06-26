@@ -1,12 +1,20 @@
-#!/bin/bash -xe
-sudo yum install -y aws-cli nginx
-sudo systemctl start nginx
-sudo systemctl enable nginx
+#!/usr/bin/env bash
+set -x
+set -e
 
-curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.33.8/install.sh | bash
-. ~/.nvm/nvm.sh
-nvm install --lts
-node -e "console.log('Running Node.js ' + process.version)"
+sudo yum install -y aws-cli nginx git
+
+sudo service nginx start
+
+curl --silent --location https://rpm.nodesource.com/setup_8.x | sudo bash -
+yum install -y nodejs
+# su - ec2-user
+# curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.33.8/install.sh | bash
+# . ~/.nvm/nvm.sh
+# nvm install --lts
+# node -e "console.log('Running Node.js ' + process.version)"
+
+# su -
 
 # git clone repo and cd into server folder
 git clone https://github.com/sowmitranalla/websocket-debug.git
@@ -14,20 +22,51 @@ cd websocket-debug/server/
 
 # install and start up the server
 npm install
-npm start &
+npm install pm2@latest -g
+# npm start &
+pm2 start index.js
 
-sudo rm /etc/nginx/sites-enabled/default
+# set up nginx
+cat >/etc/nginx/nginx.conf <<EOL
+events {
+  worker_connections 1024;
+}
+http {
+  log_format  main  '$remote_addr - $remote_user [$time_local] "$request" '
+                      '$status $body_bytes_sent "$http_referer" '
+                      '"$http_user_agent" "$http_x_forwarded_for"';
 
-echo "server {
-  listen 80;
-  server_name socket;
-  location / {
-    proxy_set_header  X-Real-IP  $remote_addr;
-    proxy_set_header  Host       $http_host;
-    proxy_pass        http://127.0.0.1:3000;
+  access_log  /var/log/nginx/access.log  main;
+  map $http_upgrade $connection_upgrade {
+      default upgrade;
+      '' close;
   }
-}" > /etc/nginx/sites-available/socket
+  sendfile            on;
+  tcp_nopush          on;
+  tcp_nodelay         on;
+  keepalive_timeout   65;
+  types_hash_max_size 2048;
 
-sudo ln -s /etc/nginx/sites-available/socket /etc/nginx/sites-enabled/socket
+  include             /etc/nginx/mime.types;
+  default_type        application/octet-stream;
+
+  upstream websocket {
+    server 127.0.0.1:3000;
+  }
+  server {
+    listen 80 default_server;
+    server_name default_server;
+    location / {
+      proxy_pass        http://127.0.0.1:3000;
+    }
+    location /echo/ {
+      proxy_pass http://127.0.0.1:3000/echo;
+      proxy_http_version 1.1;
+      proxy_set_header Upgrade $http_upgrade;
+      proxy_set_header Connection "Upgrade";
+    }
+  }
+}
+EOL
 
 sudo service nginx restart

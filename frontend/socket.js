@@ -15,6 +15,7 @@ $(function () {
     return;
   }
 
+  // var connection = new WebSocket('ws://nalla-debug-alb-2121094606.us-east-2.elb.amazonaws.com/echo');
   var connection = new WebSocket('ws://localhost:3000/echo');
   connection.onopen = () => {
     // connection is opened and ready to use
