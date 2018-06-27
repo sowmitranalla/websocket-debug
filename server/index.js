@@ -4,34 +4,42 @@ const lawgs = require('lawgs');
 const crypto = require('crypto');
 const AWS = require('aws-sdk')
 
+if (typeof Promise === 'undefined') {
+  AWS.config.setPromisesDependency(require('bluebird'));
+}
+
 const meta = new AWS.MetadataService();
 
 const app = express()
 app.use(cors());
 const WebSocket = require('express-ws')(app);
 
-
+let iid;
 
 // sets up logging 
-var startTime = new Date().toISOString();
-var iid;
-lawgs.config({ aws: { region: 'us-east-2' } })
-const logger = lawgs.getOrCreate('express-websocket');
-
-meta.request("/latest/meta-data/instance-id", function (err, data) {
-  iid = data;
-});
-
-const streamName = 'express-server-' + iid + '-' +
+let startTime = new Date().toISOString();
+let date = new Date().toISOString().split('T')[0];
+let streamName = "express-server" + date + '-' +
   crypto.createHash('md5')
     .update(startTime)
     .digest('hex');
+lawgs.config({ aws: { region: 'us-east-2' } })
+const logger = lawgs.getOrCreate('express-websocket');
+
+meta.request("/latest/meta-data/instance-id", (err, data) => {
+  if (err) {
+    console.log(err);
+  }
+  iid = data;
+  console.log(iid);
+});
 
 
 app.get("/", (req, res) => {
   logger.log(streamName, {
     message: `root path accessed from ${req.hostname}. response will be 200`,
-    headers: req.headers
+    headers: req.headers,
+    instance: iid
   });
   res.send("hello world");
 });
@@ -39,13 +47,14 @@ app.get("/", (req, res) => {
 app.get("/healthcheck", (req, res) => {
   logger.log(streamName, {
     message: `healthcheck accessed from ${req.hostname}. response will be 200`,
-    headers: req.headers
+    headers: req.headers,
+    instance: iid
   });
   res.sendStatus(200);
 });
 
-app.ws('/echo', function (ws, req) {
-  ws.on('message', function (msg) {
+app.ws('/echo', (ws, req) => {
+  ws.on('message', (msg) => {
     console.log(`websocket message @ ${Date.now()} : ${msg}`);
     num = parseInt(msg);
     num++
