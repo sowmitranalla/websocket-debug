@@ -2,17 +2,25 @@ const express = require('express');
 const cors = require('cors');
 const lawgs = require('lawgs');
 const crypto = require('crypto');
+const meta = new AWS.MetadataService();
 
 const app = express()
 app.use(cors());
 const WebSocket = require('express-ws')(app);
 
+
+
 // sets up logging 
 var startTime = new Date().toISOString();
-var date = new Date().toISOString().split('T')[0];
+var iid;
 lawgs.config({ aws: { region: 'us-east-2' } })
 const logger = lawgs.getOrCreate('express-websocket');
-const streamName = 'express-server-' + date + '-' +
+
+meta.request("/latest/meta-data/instance-id", function (err, data) {
+  iid = data;
+});
+
+const streamName = 'express-server-' + iid + '-' +
   crypto.createHash('md5')
     .update(startTime)
     .digest('hex');
