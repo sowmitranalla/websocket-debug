@@ -1,7 +1,7 @@
 // setting varibles in the global scope so i can change them when aws spins up new instances
-let ip1 = "18.222.27.196";
-let ip2 = "18.222.119.13";
-let ip3 = "18.219.205.53";
+let ip1 = "18.221.230.236";
+let ip2 = "18.222.187.154";
+let ip3 = "13.59.158.103";
 
 $(function () {
 
@@ -20,8 +20,8 @@ $(function () {
     return;
   }
 
-  let connection = new WebSocket('ws://nalla-debug-alb-2121094606.us-east-2.elb.amazonaws.com/echo');
-  // var connection = new WebSocket('ws://localhost:3000/echo');
+  // let connection = new WebSocket('ws://nalla-debug-alb-2121094606.us-east-2.elb.amazonaws.com/echo');
+  var connection = new WebSocket('ws://localhost:3000/echo');
   // var connection = new WebSocket('ws://18.219.182.198/echo');
 
   const openConnection = () => {
@@ -45,7 +45,7 @@ $(function () {
     // from server is json)
     message = parseInt(message.data);
     // avoid infinite loop
-    if (message < 10) {
+    if (message < 300) {
       setTimeout(() => {
         messages.append(`<li>${message}</li>`);
         console.log(`waiting after ${message}`)
@@ -66,8 +66,8 @@ $(function () {
   setInterval(() => {
     if (connection.readyState !== 1) {
       console.log("connection error" + Date.now());
-      connection = new WebSocket('ws://nalla-debug-alb-2121094606.us-east-2.elb.amazonaws.com/echo');
-      // connection = new WebSocket('ws://localhost:3000/echo');
+      // connection = new WebSocket('ws://nalla-debug-alb-2121094606.us-east-2.elb.amazonaws.com/echo');
+      connection = new WebSocket('ws://localhost:3000/echo');
       connection.onopen = openConnection;
       connection.onerror = (error) => {
         errorConnection(error)
