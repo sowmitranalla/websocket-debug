@@ -2,6 +2,8 @@ const express = require('express');
 const cors = require('cors');
 const lawgs = require('lawgs');
 const crypto = require('crypto');
+const AWS = require('aws-sdk')
+
 const meta = new AWS.MetadataService();
 
 const app = express()
