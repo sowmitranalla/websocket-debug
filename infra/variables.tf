@@ -13,3 +13,6 @@ variable "vpc_id" {
 variable "sg_id" {
   type = "string"
 }
+variable "profile_arn" {
+  type = "string"
+}

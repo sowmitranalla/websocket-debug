@@ -129,6 +129,7 @@ resource "aws_alb_target_group" "backend-services" {
   // slow_start = 30
   health_check {
     path = "/healthcheck"
+    unhealthy_threshold = 2
   }
 }
 
@@ -152,6 +153,7 @@ resource "aws_launch_configuration" "asg" {
   name = "backend-services-lc"
   image_id = "ami-922914f7"
   instance_type = "t2.micro"
+  iam_instance_profile = "${var.profile_arn}"
   security_groups = ["${aws_security_group.ec2_sg.id}"]
   key_name = "nallas-key"
   user_data = "${data.template_file.user_data.rendered}"
