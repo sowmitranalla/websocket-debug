@@ -88,6 +88,12 @@ resource "aws_security_group" "ec2_sg" {
     protocol    = "6"
     cidr_blocks = ["12.106.136.114/32"]
   }
+  ingress {
+    from_port   = 22
+    to_port     = 22
+    protocol    = "6"
+    cidr_blocks = ["45.22.120.198/32"]
+  }
 }
 
 // create ALB listener 

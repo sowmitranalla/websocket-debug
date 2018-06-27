@@ -1,3 +1,8 @@
+// setting varibles in the global scope so i can change them when aws spins up new instances
+let ip1 = "18.222.27.196";
+let ip2 = "18.222.119.13";
+let ip3 = "18.219.205.53";
+
 $(function () {
 
   var messages = $('#messages');
@@ -40,7 +45,7 @@ $(function () {
     // from server is json)
     message = parseInt(message.data);
     // avoid infinite loop
-    if (message < 50) {
+    if (message < 10) {
       setTimeout(() => {
         messages.append(`<li>${message}</li>`);
         console.log(`waiting after ${message}`)
@@ -62,6 +67,7 @@ $(function () {
     if (connection.readyState !== 1) {
       console.log("connection error" + Date.now());
       connection = new WebSocket('ws://nalla-debug-alb-2121094606.us-east-2.elb.amazonaws.com/echo');
+      // connection = new WebSocket('ws://localhost:3000/echo');
       connection.onopen = openConnection;
       connection.onerror = (error) => {
         errorConnection(error)
@@ -71,4 +77,74 @@ $(function () {
       };
     }
   }, 3000);
+
+  const formatRow = (i1, i2, i3) => {
+    return `<tr><td>${i1}</td><td>${i2}</td><td>${i3}</td></tr>`
+  }
+
+  setInterval(() => {
+
+    let temp = []
+
+    const promises = []
+
+    promises.push(get(`http://${ip1}/healthcheck`))
+    promises.push(get(`http://${ip2}/healthcheck`))
+    promises.push(get(`http://${ip3}/healthcheck`))
+    
+
+    Promise.all(
+      [promises[0].catch(e => e),
+      promises[1].catch(e => e),
+      promises[2].catch(e => e)])
+      .then(resp => {
+        console.log(resp)
+        resp.forEach(r => {
+          if(r.status !== 200){
+            temp.push("Failed")
+          } else {
+            temp.push("Ok")
+          }
+        })
+        $('#status tr:last').after(formatRow(temp[0], temp[1], temp[2]));
+      }).catch(err => {
+        console.log(err)
+      })
+
+
+
+  }, 3000)
+
+  function get(url) {
+    // Return a new promise.
+    return new Promise(function (resolve, reject) {
+      // Do the usual XHR stuff
+      var req = new XMLHttpRequest();
+      req.open('GET', url);
+
+      req.onload = function () {
+        // This is called even on 404 etc
+        // so check the status
+        if (req.status == 200) {
+          // Resolve the promise with the response text
+          resolve(req);
+        }
+        else {
+          // Otherwise reject with the status text
+          // which will hopefully be a meaningful error
+          reject(Error(req));
+        }
+      };
+
+      // Handle network errors
+      req.onerror = function () {
+        reject(Error("Network Error"));
+      };
+
+      // Make the request
+      req.send();
+    });
+  }
+
+
 });
