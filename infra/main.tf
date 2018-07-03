@@ -27,7 +27,8 @@ data "aws_iam_policy_document" "bucket_policy" {
     effect = "Allow"
 
     resources = [
-      "arn:aws:s3:::nallas-alb-logs-bucket-062618/*"
+      "arn:aws:s3:::nallas-alb-logs-bucket-062618/*",
+      "arn:aws:s3:::nallas-alb-logs-bucket-062618"
     ]
 
     principals {
@@ -38,6 +39,7 @@ data "aws_iam_policy_document" "bucket_policy" {
     }
   }
 }
+
 resource "aws_s3_bucket" "alb_logs" {
   bucket = "nallas-alb-logs-bucket-062618"
   acl    = "log-delivery-write"
@@ -64,8 +66,8 @@ resource "aws_security_group" "alb_sg" {
     protocol        = "-1"
     cidr_blocks     = ["0.0.0.0/0"]
   }
-
 }
+
 resource "aws_security_group" "ec2_sg" {
   name = "$ec2-sg"
   vpc_id = "${var.vpc_id}"
@@ -161,6 +163,14 @@ resource "aws_launch_configuration" "asg" {
 
 data "template_file" "user_data" {
   template = "${file("${path.module}/user_data.sh.template")}"
-  
 }
+
+// create docker file
+// create docker binary 
+// push binary to ecr 
+
+// create cluster/config
+// create task definition
+// create service 
+// link service to alb and target group
 

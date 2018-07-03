@@ -1,7 +1,7 @@
 // setting varibles in the global scope so i can change them when aws spins up new instances
-let ip1 = "18.217.191.214";
-let ip2 = "13.59.43.18";
-let ip3 = "52.14.237.169";
+let ip1 = "18.218.92.68";
+let ip2 = "18.222.161.17";
+let ip3 = "18.218.127.214";
 
 $(function () {
 
