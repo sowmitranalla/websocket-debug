@@ -14,7 +14,7 @@ const app = express()
 app.use(cors());
 const WebSocket = require('express-ws')(app);
 
-let iid;
+let iid = 'localhost';
 
 // sets up logging 
 let startTime = new Date().toISOString();
@@ -24,32 +24,40 @@ let streamName = "express-server" + date + '-' +
     .update(startTime)
     .digest('hex');
 lawgs.config({ aws: { region: 'us-east-2' } })
-const logger = lawgs.getOrCreate('express-websocket');
 
-meta.request("/latest/meta-data/instance-id", (err, data) => {
-  if (err) {
-    console.log(err);
-  }
-  iid = data;
-  console.log(iid);
-});
+
+const logger = process.env.NODE_ENV === "production" ? lawgs.getOrCreate('express-websocket'): '';
+
+if (process.env.NODE_ENV === "production") {
+  meta.request("/latest/meta-data/instance-id", (err, data) => {
+    if (err) {
+      console.log(err);
+    }
+    iid = data;
+    console.log(iid);
+  });
+}
 
 
 app.get("/", (req, res) => {
-  logger.log(streamName, {
-    message: `root path accessed from ${req.hostname}. response will be 200`,
-    headers: req.headers,
-    instance: iid
-  });
+  if (process.env.NODE_ENV === "production") {
+    logger.log(streamName, {
+      message: `root path accessed from ${req.hostname}. response will be 200`,
+      headers: req.headers,
+      instance: iid
+    });
+  }
   res.send("hello world");
 });
 
 app.get("/healthcheck", (req, res) => {
-  logger.log(streamName, {
-    message: `healthcheck accessed from ${req.hostname}. response will be 200`,
-    headers: req.headers,
-    instance: iid
-  });
+  if (process.env.NODE_ENV === "production") {
+    logger.log(streamName, {
+      message: `healthcheck accessed from ${req.hostname}. response will be 200`,
+      headers: req.headers,
+      instance: iid
+    });
+  }
   res.sendStatus(200);
 });
 
@@ -63,6 +71,8 @@ app.ws('/echo', (ws, req) => {
 });
 
 app.listen(3000, () => {
-  logger.log(streamName, "Server running on port 3000");
+  if (process.env.NODE_ENV === "production") {
+    logger.log(streamName, "Server running on port 3000");
+  }
   console.log("Server running on port 3000");
 });
