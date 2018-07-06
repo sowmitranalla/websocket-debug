@@ -1,0 +1,14 @@
+#!/bin/bash -xe
+yum install -y aws-cli
+
+echo "root hard nofile 65536" >> /etc/security/limits.conf
+echo "root soft nofile 65536" >> /etc/security/limits.conf
+echo "root hard memlock unlimited" >> /etc/security/limits.conf
+echo "root soft memlock unlimited" >> /etc/security/limits.conf
+
+mkdir -p /etc/ecs
+touch /etc/ecs/ecs.config
+echo ECS_CLUSTER=${cluster_name} >> /etc/ecs/ecs.config
+echo ECS_ENABLE_TASK_IAM_ROLE_NETWORK_HOST=true >> /etc/ecs/ecs.config
+
+reboot
