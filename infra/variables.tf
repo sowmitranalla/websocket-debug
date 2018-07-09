@@ -25,3 +25,7 @@ variable "profile_arn" {
 variable "ecs_arn" {
   type = "string"
 }
+
+variable "service_role" {
+  type = "string"
+}

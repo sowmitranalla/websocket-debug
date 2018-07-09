@@ -3,20 +3,6 @@ provider "aws" {
   profile = "default"
 }
 
-resource "aws_alb" "nalla-debug-alb" {
-  name               = "nalla-debug-alb"
-  internal           = false
-  load_balancer_type = "application"
-  subnets            = ["${var.subnet1}", "${var.subnet2}", "${var.subnet3}"]
-  security_groups    = ["${aws_security_group.alb_sg.id}"]
-
-  access_logs {
-    bucket  = "${aws_s3_bucket.alb_logs.bucket}"
-    prefix  = "test-lb"
-    enabled = true
-  }
-}
-
 data "aws_elb_service_account" "main" {}
 
 data "aws_iam_policy_document" "bucket_policy" {
@@ -91,6 +77,13 @@ resource "aws_security_group" "ec2_sg" {
   }
 
   ingress {
+    from_port   = 3000
+    to_port     = 3000
+    protocol    = "6"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
     from_port   = 22
     to_port     = 22
     protocol    = "6"
@@ -105,47 +98,6 @@ resource "aws_security_group" "ec2_sg" {
   }
 }
 
-// create ALB listener 
-resource "aws_alb_listener" "backend-services" {
-  load_balancer_arn = "${aws_alb.nalla-debug-alb.arn}"
-  port              = 80
-  protocol          = "HTTP"
-
-  default_action {
-    target_group_arn = "${aws_alb_target_group.backend-services.arn}"
-    type             = "forward"
-  }
-}
-
-resource "aws_alb_listener_rule" "backend-services" {
-  listener_arn = "${aws_alb_listener.backend-services.arn}"
-  priority     = 1
-
-  condition {
-    field  = "path-pattern"
-    values = ["/"]
-  }
-
-  action {
-    target_group_arn = "${aws_alb_target_group.backend-services.arn}"
-    type             = "forward"
-  }
-}
-
-// create ALB target
-resource "aws_alb_target_group" "backend-services" {
-  name     = "backend-services-tg"
-  port     = 80
-  protocol = "HTTP"
-  vpc_id   = "${var.vpc_id}"
-
-  // slow_start = 30
-  health_check {
-    path                = "/healthcheck"
-    unhealthy_threshold = 2
-  }
-}
-
 // create auto scalling group. this is for the instance level. hence healthcheck type is EC2
 resource "aws_autoscaling_group" "nallas-asg" {
   name                = "nallas-asg"
@@ -156,7 +108,6 @@ resource "aws_autoscaling_group" "nallas-asg" {
   vpc_zone_identifier = ["${var.subnet1}", "${var.subnet2}", "${var.subnet3}"]
 
   // tie instances to target group and launch configuration for the cluster
-  target_group_arns    = ["${aws_alb_target_group.backend-services.arn}"]
   launch_configuration = "${aws_launch_configuration.asg.id}"
 }
 
@@ -192,7 +143,7 @@ resource "aws_ecr_repository" "backend_ecr" {
   name = "backend-ecr-repo"
 }
 
-// push binary to ecr
+// push binary to ecr - done
 
 // create task definition
 resource "aws_ecs_task_definition" "backend-svc" {
@@ -203,6 +154,22 @@ resource "aws_ecs_task_definition" "backend-svc" {
 }
 
 // create service 
+resource "aws_ecs_service" "backend-svc" {
+  // depends_on = ["aws_alb_target_group.service-tg"]
+  name                               = "backend-svc"
+  cluster                            = "${aws_ecs_cluster.backend-ecs.arn}"
+  task_definition                    = "${aws_ecs_task_definition.backend-svc.arn}"
+  desired_count                      = "3"
+  iam_role                           = "${var.service_role}"
+  deployment_minimum_healthy_percent = "60"
+  deployment_maximum_percent         = "200"
+
+  load_balancer {
+    container_name   = "${aws_ecs_task_definition.backend-svc.family}"
+    container_port   = "3000"
+    target_group_arn = "${aws_alb_target_group.backend-services.arn}"
+  }
+}
 
 // create cluster/config
 resource "aws_ecs_cluster" "backend-ecs" {
@@ -211,10 +178,72 @@ resource "aws_ecs_cluster" "backend-ecs" {
 
 // link service to alb and target group. to do this, you need to do everything below
 
-
 // create alb for container
-// create alb listener for container 
-// create alb listener rule for container
-// create target group for container
-// create asg for container
+resource "aws_alb" "backend_svc_alb" {
+  name               = "backend-svc-alb"
+  internal           = false
+  load_balancer_type = "application"
+  subnets            = ["${var.subnet1}", "${var.subnet2}", "${var.subnet3}"]
+  security_groups    = ["${aws_security_group.alb_sg.id}"]
 
+  access_logs {
+    bucket  = "${aws_s3_bucket.alb_logs.bucket}"
+    prefix  = "backend_svc_alb"
+    enabled = true
+  }
+}
+
+// create alb listener for container
+resource "aws_alb_listener" "backend-services" {
+  load_balancer_arn = "${aws_alb.backend_svc_alb.arn}"
+  port              = 80
+  protocol          = "HTTP"
+
+  default_action {
+    target_group_arn = "${aws_alb_target_group.backend-services.arn}"
+    type             = "forward"
+  }
+}
+
+// create alb listener rule for container
+resource "aws_alb_listener_rule" "backend-services" {
+  listener_arn = "${aws_alb_listener.backend-services.arn}"
+  priority     = 1
+
+  condition {
+    field  = "path-pattern"
+    values = ["/"]
+  }
+
+  action {
+    target_group_arn = "${aws_alb_target_group.backend-services.arn}"
+    type             = "forward"
+  }
+}
+
+// create target group for container
+resource "aws_alb_target_group" "backend-services" {
+  name     = "backend-services-tg"
+  port     = 80
+  protocol = "HTTP"
+  vpc_id   = "${var.vpc_id}"
+
+  // slow_start = 30
+  health_check {
+    path                = "/healthcheck"
+    port = 3000
+    unhealthy_threshold = 2
+    matcher             = "200-310"
+  }
+}
+
+// create asg for container
+resource "aws_appautoscaling_target" "service" {
+  max_capacity = "3"
+  min_capacity = "3"
+  resource_id  = "service/backend-ecs/${aws_ecs_service.backend-svc.name}"
+
+  // role_arn = "${var.autoscaling_role}"
+  scalable_dimension = "ecs:service:DesiredCount"
+  service_namespace  = "ecs"
+}
