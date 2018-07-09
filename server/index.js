@@ -19,7 +19,7 @@ let iid = 'localhost';
 // sets up logging 
 let startTime = new Date().toISOString();
 let date = new Date().toISOString().split('T')[0];
-let streamName = "express-server" + date + '-' +
+let streamName = "express-server-" + date + '-' +
   crypto.createHash('md5')
     .update(startTime)
     .digest('hex');
@@ -34,7 +34,7 @@ if (process.env.NODE_ENV === "production") {
       console.log(err);
     }
     iid = data;
-    console.log(iid);
+    // console.log(iid);
   });
 }
 
@@ -47,7 +47,7 @@ app.get("/", (req, res) => {
       instance: iid
     });
   }
-  res.send("hello world");
+  res.send({iid});
 });
 
 app.get("/healthcheck", (req, res) => {
@@ -58,7 +58,7 @@ app.get("/healthcheck", (req, res) => {
       instance: iid
     });
   }
-  res.sendStatus(200);
+  res.send({iid});
 });
 
 app.ws('/echo', (ws, req) => {

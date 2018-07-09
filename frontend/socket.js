@@ -1,4 +1,5 @@
 // setting varibles in the global scope so i can change them when aws spins up new instances
+let alb = "backend-svc-alb-2099270242.us-east-2.elb.amazonaws.com";
 let ip1 = "18.216.194.22:3000";
 let ip2 = "18.191.175.226:3000";
 let ip3 = "18.191.4.58:3000";
@@ -78,8 +79,8 @@ $(function () {
     }
   }, 3000);
 
-  const formatRow = (i1, i2, i3) => {
-    return `<tr><td>${i1}</td><td>${i2}</td><td>${i3}</td></tr>`
+  const formatRow = (alb, i1, i2, i3) => {
+    return `<tr><td>${alb}</td><td>${i1}</td><td>${i2}</td><td>${i3}</td></tr>`
   }
 
   setInterval(() => {
@@ -88,6 +89,7 @@ $(function () {
 
     const promises = []
 
+    promises.push(get(`http://${alb}/healthcheck`))
     promises.push(get(`http://${ip1}/healthcheck`))
     promises.push(get(`http://${ip2}/healthcheck`))
     promises.push(get(`http://${ip3}/healthcheck`))
@@ -96,17 +98,18 @@ $(function () {
     Promise.all(
       [promises[0].catch(e => e),
       promises[1].catch(e => e),
-      promises[2].catch(e => e)])
+      promises[2].catch(e => e),
+      promises[3].catch(e => e)])
       .then(resp => {
         console.log(resp)
         resp.forEach(r => {
           if(r.status !== 200){
             temp.push("Failed")
           } else {
-            temp.push("Ok")
+            temp.push(JSON.parse(r.responseText)["iid"])
           }
         })
-        $('#status tr:last').after(formatRow(temp[0], temp[1], temp[2]));
+        $('#status tr:last').after(formatRow(temp[0], temp[1], temp[2], temp[3]));
       }).catch(err => {
         console.log(err)
       })
