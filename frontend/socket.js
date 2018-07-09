@@ -1,7 +1,7 @@
 // setting varibles in the global scope so i can change them when aws spins up new instances
-let ip1 = "18.218.92.68";
-let ip2 = "18.222.161.17";
-let ip3 = "18.218.127.214";
+let ip1 = "18.216.194.22:3000";
+let ip2 = "18.191.175.226:3000";
+let ip3 = "18.191.4.58:3000";
 
 $(function () {
 
@@ -20,7 +20,7 @@ $(function () {
     return;
   }
 
-  let connection = new WebSocket('ws://nalla-debug-alb-577516900.us-east-2.elb.amazonaws.com/echo');
+  let connection = new WebSocket('ws://backend-svc-alb-2099270242.us-east-2.elb.amazonaws.com/echo');
   // var connection = new WebSocket('ws://localhost:3000/echo');
   // var connection = new WebSocket('ws://18.219.182.198/echo');
 
@@ -66,7 +66,7 @@ $(function () {
   setInterval(() => {
     if (connection.readyState !== 1) {
       console.log("connection error" + Date.now());
-      connection = new WebSocket('ws://nalla-debug-alb-577516900.us-east-2.elb.amazonaws.com/echo');
+      connection = new WebSocket('ws://backend-svc-alb-2099270242.us-east-2.elb.amazonaws.com/echo');
       // connection = new WebSocket('ws://localhost:3000/echo');
       connection.onopen = openConnection;
       connection.onerror = (error) => {

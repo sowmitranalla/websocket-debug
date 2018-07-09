@@ -1,7 +1,7 @@
 [{
   "name": "backend-service",
-  "cpu": 750,
-  "memory": 450,
+  "cpu": 300,
+  "memory": 300,
   "essential": true,
   "image": "671565055510.dkr.ecr.us-east-2.amazonaws.com/backend-ecr-repo:latest",
   "portMappings": [
