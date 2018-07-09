@@ -8,3 +8,9 @@ The terraform scripts in this repo will create an ALB, ASG, launch config, insta
 * fill above file with the variables defined in `variables.tf`
 * `terraform init && terraform apply`
 * `terraform destroy` after you're done toying/testing 
+
+### New questions:
+
+1) What is the effect of using stages in API Gateway.
+  * how to do blue/green deployments
+  * use canary
