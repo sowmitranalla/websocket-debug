@@ -1,5 +1,5 @@
 [{
-  "name": "websocket-service",
+  "name": "backend-service",
   "cpu": 750,
   "memory": 450,
   "essential": true,
