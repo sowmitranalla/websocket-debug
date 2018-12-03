@@ -3,6 +3,14 @@ provider "aws" {
   profile = "default"
 }
 
+terraform {
+  backend "s3" {
+    bucket = "nallas-abbvie-bucket"
+    key    = "websocket-debug/terraform.tfstate"
+    region = "us-east-2"
+  }
+}
+
 data "aws_elb_service_account" "main" {}
 
 data "aws_iam_policy_document" "bucket_policy" {
@@ -191,6 +199,12 @@ resource "aws_alb" "backend_svc_alb" {
     prefix  = "backend_svc_alb"
     enabled = true
   }
+}
+
+resource "aws_s3_bucket" "bucket" {
+  bucket = "nallas-bucket-10052018"
+  acl      = "public-read"
+  region   = "us-east-2"
 }
 
 // create alb listener for container
